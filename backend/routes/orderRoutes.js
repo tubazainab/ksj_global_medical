@@ -7,7 +7,8 @@ const {
   getCustomerOrders,
   updateOrderStatus,
   requestReturn,
-  getAllOrders
+  getAllOrders,
+  getInvoice
 } = require('../controllers/orderController');
 const { protect, restrictTo } = require('../middleware/auth');
 
@@ -16,6 +17,7 @@ router.post('/verify-payment', protect, verifyPayment);
 router.get('/customer', protect, restrictTo('user'), getCustomerOrders);
 router.get('/all', protect, restrictTo('Admin', 'Manager', 'Sales Executive', 'Delivery Coordinator'), getAllOrders);
 router.get('/:id', protect, getOrderDetails);
+router.get('/:id/invoice', getInvoice);
 router.put('/:id/status', protect, restrictTo('Admin', 'Manager', 'Pharmacist', 'Sales Executive', 'Delivery Coordinator'), updateOrderStatus);
 router.post('/:id/return', protect, restrictTo('user'), requestReturn);
 

@@ -271,3 +271,146 @@ exports.getAllOrders = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Generate TAX Invoice HTML
+exports.getInvoice = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('customer', 'name email phone');
+    if (!order) {
+      return res.status(404).send('<h1>Order not found</h1>');
+    }
+
+    const itemsRows = order.items.map((it, idx) => `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${idx + 1}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;"><b>${it.name}</b></td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center;">${it.quantity}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">₹${it.price}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">₹${parseFloat(it.price) * it.quantity}</td>
+      </tr>
+    `).join('');
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice - ${order.orderId}</title>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; margin: 40px; }
+          .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, .15); font-size: 14px; line-height: 24px; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #0f4c81; padding-bottom: 20px; margin-bottom: 30px; }
+          .logo { font-size: 24px; font-weight: bold; color: #0f4c81; }
+          .meta-info { text-align: right; }
+          .billing-info { display: flex; justify-content: space-between; margin-bottom: 40px; }
+          .billing-info div { flex: 1; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          th { background: #f8fafc; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }
+          .totals { text-align: right; }
+          .totals table { width: 300px; margin-left: auto; }
+          .footer { text-align: center; margin-top: 50px; font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+          .print-btn { background: #10b981; color: #fff; border: 0; padding: 10px 20px; font-weight: bold; border-radius: 8px; cursor: pointer; display: block; margin: 20px auto 0; }
+          @media print { .print-btn { display: none; } }
+        </style>
+      </head>
+      <body>
+        <div class="invoice-box">
+          <div class="header">
+            <div>
+              <div class="logo">KSJ Global Medical</div>
+              <div style="font-size: 11px; color: #666;">Your Trusted Online Medical Store</div>
+              <div style="font-size: 11px; color: #666;">Lic No: DL-39281-KSJ | GSTIN: 27AAAAA1111A1Z1</div>
+            </div>
+            <div class="meta-info">
+              <h2 style="margin: 0; color: #0f4c81;">TAX INVOICE</h2>
+              <div style="font-size: 12px; margin-top: 5px;">
+                <b>Invoice Ref:</b> ${order.orderId}<br>
+                <b>Date:</b> ${new Date(order.createdAt).toLocaleDateString()}<br>
+                <b>Status:</b> ${order.paymentStatus} (${order.paymentMethod})
+              </div>
+            </div>
+          </div>
+
+          <div class="billing-info">
+            <div>
+              <h4 style="margin: 0 0 5px; color: #0f4c81;">Sold By:</h4>
+              <b>KSJ Pharmacy Pvt. Ltd.</b><br>
+              12, Medical Plaza, Sector 4<br>
+              New Delhi, India, 110001<br>
+              support@ksjmedical.com
+            </div>
+            <div style="text-align: right;">
+              <h4 style="margin: 0 0 5px; color: #0f4c81;">Shipped To:</h4>
+              <b>${order.customer?.name || 'Customer'}</b><br>
+              ${order.shippingAddress?.street || ''}<br>
+              ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} - ${order.shippingAddress?.postalCode || ''}<br>
+              Phone: ${order.customer?.phone || ''}
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 50px;">S.No</th>
+                <th>Medicine / Product Details</th>
+                <th style="width: 80px; text-align: center;">Qty</th>
+                <th style="width: 100px; text-align: right;">Rate (₹)</th>
+                <th style="width: 100px; text-align: right;">Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsRows}
+            </tbody>
+          </table>
+
+          <div class="totals">
+            <table>
+              <tr>
+                <td style="padding: 5px 0;">Subtotal:</td>
+                <td style="padding: 5px 0; text-align: right;">₹${order.totals.subtotal}</td>
+              </tr>
+              <tr>
+                <td style="padding: 5px 0;">GST Tax (12%):</td>
+                <td style="padding: 5px 0; text-align: right;">₹${order.totals.gst}</td>
+              </tr>
+              <tr>
+                <td style="padding: 5px 0;">Shipping Charges:</td>
+                <td style="padding: 5px 0; text-align: right;">₹${order.totals.shipping}</td>
+              </tr>
+              ${order.totals.discount > 0 ? `
+              <tr style="color: #10b981; font-weight: bold;">
+                <td style="padding: 5px 0;">Discount:</td>
+                <td style="padding: 5px 0; text-align: right;">- ₹${order.totals.discount}</td>
+              </tr>
+              ` : ''}
+              <tr style="font-weight: bold; font-size: 16px; border-top: 2px solid #333; color: #0f4c81;">
+                <td style="padding: 10px 0;">Grand Total:</td>
+                <td style="padding: 10px 0; text-align: right;">₹${order.totals.grandTotal}</td>
+              </tr>
+            </table>
+          </div>
+
+          <button class="print-btn" onclick="window.print()">Print / Download PDF</button>
+
+          <div class="footer">
+            <p>This is a computer-generated GST Tax Invoice. No signature is required.</p>
+            <p>Thank you for choosing KSJ Global Medical as your wellness partner.</p>
+          </div>
+        </div>
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          }
+        </script>
+      </body>
+      </html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html');
+    return res.status(200).send(html);
+  } catch (error) {
+    return res.status(500).send(`<h1>Server error generating invoice: ${error.message}</h1>`);
+  }
+};
