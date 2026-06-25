@@ -180,3 +180,95 @@ exports.getAllConversations = async (req, res) => {
   }
 };
 
+// Suggest an AI reply for a chatbot session dialogue history
+exports.suggestReply = async (req, res) => {
+  const { sessionId } = req.params;
+
+  try {
+    const conversation = await ChatbotConversation.findOne({ sessionId });
+    if (!conversation) {
+      return res.status(404).json({ success: false, message: 'Conversation session not found' });
+    }
+
+    const messages = conversation.messages || [];
+    if (messages.length === 0) {
+      return res.status(200).json({ success: true, suggestion: 'Hello! How can we assist you today?' });
+    }
+
+    const historyText = messages
+      .map(m => `${m.sender === 'user' ? 'Customer' : 'AI Assistant'}: ${m.text}`)
+      .join('\n');
+
+    let suggestion = '';
+
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+        const promptContext = `
+          You are the support administrator/AI assistant for "KSJ Global Medical" (Your Trusted Online Medical Store).
+          Below is a dialogue history between a customer and our online portal.
+          Based on the conversation context, draft the next reply for the customer.
+          
+          Guidelines:
+          1. Answer directly and naturally. Do NOT wrap your output in quotes or add prefix/suffix labels like "AI:" or "Here is a draft:".
+          2. Be highly polite, professional, and clear.
+          3. Use markdown for lists or bold text if helpful.
+          4. Do NOT output standard clinical disclaimers in the text itself.
+          
+          Dialogue History:
+          ${historyText}
+          
+          Suggested Response:
+        `;
+
+        const result = await model.generateContent(promptContext);
+        const responseText = await result.response.text();
+        suggestion = responseText.trim();
+      } catch (geminiError) {
+        console.error('Gemini Suggestion Error:', geminiError.message);
+        suggestion = 'Thank you for reaching out. We have logged your query and will assist you shortly.';
+      }
+    } else {
+      suggestion = 'Thank you for contacting KSJ Global Medical Support. How can we help you?';
+    }
+
+    return res.status(200).json({
+      success: true,
+      suggestion
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Send an admin reply directly into a chatbot conversation
+exports.sendReply = async (req, res) => {
+  const { sessionId } = req.params;
+  const { text } = req.body;
+
+  try {
+    if (!text || !text.trim()) {
+      return res.status(400).json({ success: false, message: 'Message text is required' });
+    }
+
+    let conversation = await ChatbotConversation.findOne({ sessionId });
+    if (!conversation) {
+      return res.status(404).json({ success: false, message: 'Conversation session not found' });
+    }
+
+    // Push the admin message as 'ai' sender so customer chatbot displays it
+    conversation.messages.push({ sender: 'ai', text });
+    await conversation.save();
+
+    return res.status(200).json({
+      success: true,
+      data: conversation
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+

@@ -69,6 +69,9 @@ export default function AdminDashboard() {
   const [loadingChats, setLoadingChats] = useState(false);
   const [selectedChat, setSelectedChat] = useState(null);
   const [chatSearchQuery, setChatSearchQuery] = useState('');
+  const [adminReplyText, setAdminReplyText] = useState('');
+  const [generatingSuggestion, setGeneratingSuggestion] = useState(false);
+  const [sendingReply, setSendingReply] = useState(false);
 
   // Form states - Add Medicine
   const [medName, setMedName] = useState('');
@@ -170,6 +173,88 @@ export default function AdminDashboard() {
       fetchAdminDetails();
     }
   }, [token, employee]);
+
+  const handleFetchSuggestion = async (sessionId) => {
+    if (!sessionId || !token) return;
+    setGeneratingSuggestion(true);
+    try {
+      const res = await fetch(`${API_URL}/chatbot/conversations/${sessionId}/suggest`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAdminReplyText(data.suggestion);
+      } else {
+        alert(data.message || 'Failed to generate AI suggestion.');
+      }
+    } catch (err) {
+      console.error('Error fetching suggestion:', err);
+    } finally {
+      setGeneratingSuggestion(false);
+    }
+  };
+
+  const handleSendAdminReply = async (sessionId, overrideText = null) => {
+    const textToSend = overrideText !== null ? overrideText : adminReplyText;
+    if (!sessionId || !token || !textToSend || !textToSend.trim()) return;
+
+    setSendingReply(true);
+    try {
+      const res = await fetch(`${API_URL}/chatbot/conversations/${sessionId}/reply`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ text: textToSend })
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (overrideText === null) {
+          setAdminReplyText('');
+        }
+        
+        // Refresh conversations
+        const freshRes = await fetch(`${API_URL}/chatbot/conversations`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const freshData = await freshRes.json();
+        if (freshData.success) {
+          setConversations(freshData.data);
+          const updatedChat = freshData.data.find(c => c.sessionId === sessionId);
+          if (updatedChat) {
+            setSelectedChat(updatedChat);
+          }
+        }
+      } else {
+        alert(data.message || 'Failed to send reply.');
+      }
+    } catch (err) {
+      console.error('Error sending reply:', err);
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
+  const handleAISendAutoReply = async (sessionId) => {
+    if (!sessionId || !token) return;
+    setGeneratingSuggestion(true);
+    try {
+      const res = await fetch(`${API_URL}/chatbot/conversations/${sessionId}/suggest`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && data.suggestion) {
+        await handleSendAdminReply(sessionId, data.suggestion);
+      } else {
+        alert('Failed to generate AI auto-reply.');
+      }
+    } catch (err) {
+      console.error('Error in AI auto-reply:', err);
+    } finally {
+      setGeneratingSuggestion(false);
+    }
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -1029,6 +1114,80 @@ export default function AdminDashboard() {
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Reply Footer Panel */}
+                <div className="border-t pt-3.5 mt-2 flex flex-col space-y-3 shrink-0">
+                  <div className="relative">
+                    <textarea
+                      rows="2"
+                      placeholder="Type a manual response or use AI assistance below..."
+                      value={adminReplyText}
+                      onChange={(e) => setAdminReplyText(e.target.value)}
+                      className="w-full p-3 text-xs border border-slate-300 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500 resize-none font-medium"
+                      disabled={sendingReply || generatingSuggestion}
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleFetchSuggestion(selectedChat.sessionId)}
+                        disabled={generatingSuggestion || sendingReply}
+                        className="flex items-center justify-center px-3.5 py-2 bg-pharmacy-50 hover:bg-pharmacy-100 text-pharmacy-800 dark:bg-pharmacy-950/40 dark:text-pharmacy-300 rounded-xl text-xxs font-extrabold shadow-sm border border-pharmacy-200/40 transition-colors disabled:opacity-50"
+                        title="AI drafts a message in the editor for you to review and customize"
+                      >
+                        {generatingSuggestion ? (
+                          <span className="flex items-center">
+                            <span className="animate-spin mr-1.5 h-3 w-3 border-2 border-pharmacy-600 border-t-transparent rounded-full" />
+                            Drafting...
+                          </span>
+                        ) : (
+                          <>
+                            <span className="mr-1.5">🪄</span> Draft with AI
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAISendAutoReply(selectedChat.sessionId)}
+                        disabled={generatingSuggestion || sendingReply}
+                        className="flex items-center justify-center px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 rounded-xl text-xxs font-extrabold shadow-sm border border-indigo-200/40 transition-colors disabled:opacity-50"
+                        title="AI automatically drafts and sends the response directly"
+                      >
+                        {generatingSuggestion ? (
+                          <span className="flex items-center">
+                            <span className="animate-spin mr-1.5 h-3 w-3 border-2 border-indigo-600 border-t-transparent rounded-full" />
+                            Processing...
+                          </span>
+                        ) : (
+                          <>
+                            <span className="mr-1.5">⚡</span> AI Auto-Reply
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSendAdminReply(selectedChat.sessionId)}
+                      disabled={sendingReply || generatingSuggestion || !adminReplyText.trim()}
+                      className="px-5 py-2 bg-medical-600 hover:bg-medical-700 disabled:bg-slate-350 text-white rounded-xl text-xxs font-extrabold shadow-md transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      {sendingReply ? (
+                        <span className="flex items-center">
+                          <span className="animate-spin mr-1.5 h-3 w-3 border-2 border-white border-t-transparent rounded-full" />
+                          Sending...
+                        </span>
+                      ) : (
+                        <>
+                          Send Reply
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
               </div>

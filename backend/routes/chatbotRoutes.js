@@ -1,10 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { queryChatbot, getAllConversations } = require('../controllers/chatbotController');
+const { queryChatbot, getAllConversations, suggestReply, sendReply } = require('../controllers/chatbotController');
 const { protect, restrictTo } = require('../middleware/auth');
 
 // Retrieve all conversation logs for Admin/Staff directory
 router.get('/conversations', protect, restrictTo('Admin', 'Manager', 'Pharmacist', 'Sales Executive', 'Delivery Coordinator', 'Customer Support'), getAllConversations);
+
+// Admin AI suggestion and manual response handlers
+router.get('/conversations/:sessionId/suggest', protect, restrictTo('Admin', 'Manager', 'Pharmacist', 'Sales Executive', 'Delivery Coordinator', 'Customer Support'), suggestReply);
+router.post('/conversations/:sessionId/reply', protect, restrictTo('Admin', 'Manager', 'Pharmacist', 'Sales Executive', 'Delivery Coordinator', 'Customer Support'), sendReply);
+
 
 // Handles guest or authenticated chatbot dialog sessions
 router.post('/query', (req, res, next) => {
