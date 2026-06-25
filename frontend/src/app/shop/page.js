@@ -226,8 +226,16 @@ function ShopContent() {
                       </button>
 
                       <Link href={`/product/${med._id}`} className="group block mb-4">
-                        <div className="h-40 w-full bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 group-hover:opacity-95 transition-opacity">
-                          <HeartPulse size={48} className="text-medical-600/30" />
+                        <div className="h-40 w-full bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 group-hover:opacity-95 transition-opacity overflow-hidden relative">
+                          {med.imageURIs && med.imageURIs.length > 0 && med.imageURIs[0] ? (
+                            <img
+                              src={med.imageURIs[0]}
+                              alt={med.name}
+                              className="w-full h-full object-contain p-2 rounded-xl transition-transform hover:scale-105 duration-300"
+                            />
+                          ) : (
+                            <HeartPulse size={48} className="text-medical-600/30" />
+                          )}
                         </div>
                         <span className="text-[10px] font-bold text-pharmacy-600 uppercase tracking-wider block mt-2">
                           {med.brand}

@@ -122,8 +122,12 @@ export default function ProductDetails() {
         
         {/* Left: Product Media Block */}
         <div className="space-y-4">
-          <div className="h-[350px] w-full bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 relative">
-            <HeartPulse size={96} className="text-medical-600/30" />
+          <div className="h-[350px] w-full bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 relative overflow-hidden">
+            {medicine.imageURIs && medicine.imageURIs.length > 0 && medicine.imageURIs[0] ? (
+              <img src={medicine.imageURIs[0]} alt={medicine.name} className="w-full h-full object-contain p-4 rounded-2xl" />
+            ) : (
+              <HeartPulse size={96} className="text-medical-600/30" />
+            )}
             
             {medicine.requiresPrescription && (
               <span className="absolute top-4 left-4 bg-amber-500 text-white rounded px-3 py-1 text-xs font-bold uppercase tracking-wider">

@@ -13,7 +13,8 @@ import {
   Calendar,
   AlertCircle,
   Activity,
-  Plus
+  Plus,
+  X
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -48,6 +49,7 @@ export default function AdminDashboard() {
   const [medStock, setMedStock] = useState(50);
   const [medExpiry, setMedExpiry] = useState('');
   const [medRx, setMedRx] = useState(false);
+  const [medImage, setMedImage] = useState('');
   const [medError, setMedError] = useState('');
   const [medSuccess, setMedSuccess] = useState('');
 
@@ -109,6 +111,17 @@ export default function AdminDashboard() {
     }
   }, [token, employee]);
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMedImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleAddMedicine = async (e) => {
     e.preventDefault();
     setMedError('');
@@ -131,7 +144,8 @@ export default function AdminDashboard() {
           price: Number(medPrice),
           stock: Number(medStock),
           expiryDate: new Date(medExpiry),
-          requiresPrescription: medRx
+          requiresPrescription: medRx,
+          imageURIs: medImage ? [medImage] : []
         })
       });
       const data = await res.json();
@@ -142,6 +156,7 @@ export default function AdminDashboard() {
         setMedGeneric('');
         setMedBrand('');
         setMedDesc('');
+        setMedImage('');
       } else {
         setMedError(data.message || 'Failed to add medicine.');
       }
@@ -412,6 +427,31 @@ export default function AdminDashboard() {
                 className="h-4 w-4 rounded cursor-pointer accent-medical-600"
               />
               <label htmlFor="medRx" className="font-bold text-slate-700 dark:text-slate-300 cursor-pointer">Requires Prescription</label>
+            </div>
+
+            <div className="col-span-2 space-y-1 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+              <label className="text-slate-400 font-bold block mb-1.5">Medicine Catalog Image</label>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-medical-50 file:text-medical-700 dark:file:bg-medical-950/40 dark:file:text-medical-300 hover:file:bg-medical-100 dark:hover:file:bg-medical-900 cursor-pointer"
+                />
+                {medImage && (
+                  <div className="relative w-20 h-20 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800 flex items-center justify-center shrink-0 shadow-sm">
+                    <img src={medImage} alt="Preview" className="w-full h-full object-contain p-1" />
+                    <button
+                      type="button"
+                      onClick={() => setMedImage('')}
+                      className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors shadow"
+                      title="Remove image"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="col-span-2 space-y-1">

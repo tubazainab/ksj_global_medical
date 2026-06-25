@@ -194,8 +194,16 @@ export default function Home() {
                     &hearts;
                   </button>
 
-                  <div className="h-40 w-full bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 flex items-center justify-center text-slate-400">
-                    <HeartPulse size={48} className="text-medical-500/40" />
+                  <div className="h-40 w-full bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 flex items-center justify-center text-slate-400 overflow-hidden relative">
+                    {med.imageURIs && med.imageURIs.length > 0 && med.imageURIs[0] ? (
+                      <img
+                        src={med.imageURIs[0]}
+                        alt={med.name}
+                        className="w-full h-full object-contain p-2 rounded-xl transition-transform hover:scale-105 duration-300"
+                      />
+                    ) : (
+                      <HeartPulse size={48} className="text-medical-500/40" />
+                    )}
                   </div>
 
                   <div className="space-y-1 text-left flex-grow">
