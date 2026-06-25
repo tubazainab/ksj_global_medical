@@ -29,7 +29,7 @@ exports.queryChatbot = async (req, res) => {
     const cleanMsg = message.toLowerCase().replace(/[?,.!]/g, '');
     const words = cleanMsg.split(/\s+/).filter(w => 
       w.length > 2 && 
-      !['available', 'not', 'have', 'you', 'for', 'any', 'does', 'shop', 'store', 'buy', 'get', 'with', 'medicine', 'medicines', 'tablet', 'tablets', 'syrup', 'syrups', 'please', 'needed', 'status', 'deliver', 'delivered', 'order'].includes(w)
+      !['available', 'not', 'have', 'you', 'for', 'any', 'does', 'shop', 'store', 'buy', 'get', 'with', 'medicine', 'medicines', 'tablet', 'tablets', 'syrup', 'syrups', 'please', 'needed', 'status', 'deliver', 'delivered', 'order', 'add', 'cart', 'to', 'put'].includes(w)
     );
 
     let foundMedicines = [];
@@ -102,7 +102,8 @@ exports.queryChatbot = async (req, res) => {
     return res.status(200).json({
       success: true,
       reply: finalResponseText,
-      sessionId
+      sessionId,
+      medicines: foundMedicines
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

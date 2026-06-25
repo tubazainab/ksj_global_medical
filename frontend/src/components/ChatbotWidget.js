@@ -3,11 +3,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send, HeartPulse, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export default function ChatbotWidget() {
   const { token } = useAuth();
+  const { addToCart } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [sessionId, setSessionId] = useState('');
   const [messages, setMessages] = useState([
@@ -59,7 +61,7 @@ export default function ChatbotWidget() {
       const data = await res.json();
 
       if (data.success) {
-        setMessages((prev) => [...prev, { sender: 'ai', text: data.reply }]);
+        setMessages((prev) => [...prev, { sender: 'ai', text: data.reply, medicines: data.medicines }]);
       } else {
         setMessages((prev) => [...prev, { sender: 'ai', text: 'Sorry, I am facing connectivity issues. Please try again.' }]);
       }
@@ -124,6 +126,15 @@ export default function ChatbotWidget() {
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200/50 dark:border-slate-700/50'
                   }`}>
                     {msg.text}
+
+                    {msg.medicines && msg.medicines.length > 0 && (
+                      <div className="mt-3 space-y-2 border-t pt-2.5 border-slate-200/40 dark:border-slate-700/40">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-left">Products found:</p>
+                        {msg.medicines.map((med) => (
+                          <ChatProductCard key={med._id} med={med} addToCart={addToCart} />
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                 </div>
@@ -170,6 +181,56 @@ export default function ChatbotWidget() {
         </div>
       )}
 
+    </div>
+  );
+}
+
+function ChatProductCard({ med, addToCart }) {
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+
+  const handleAdd = async () => {
+    setAdding(true);
+    const res = await addToCart(med, 1);
+    setAdding(false);
+    if (res && res.success) {
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    }
+  };
+
+  const isOutOfStock = med.stock === 0;
+
+  return (
+    <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 gap-2 mt-1">
+      <div className="flex items-center space-x-2 shrink overflow-hidden">
+        <div className="w-8 h-8 rounded bg-slate-50 dark:bg-slate-800 border shrink-0 flex items-center justify-center overflow-hidden">
+          {med.imageURIs && med.imageURIs[0] ? (
+            <img src={med.imageURIs[0]} alt={med.name} className="w-full h-full object-contain p-0.5" />
+          ) : (
+            <HeartPulse size={12} className="text-slate-400" />
+          )}
+        </div>
+        <div className="text-left truncate">
+          <p className="font-extrabold text-[11px] text-slate-850 dark:text-slate-200 truncate">{med.name}</p>
+          <p className="text-[9px] text-slate-400">₹{med.price} | {med.brand}</p>
+        </div>
+      </div>
+      
+      <button
+        type="button"
+        disabled={isOutOfStock || adding}
+        onClick={handleAdd}
+        className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black shrink-0 shadow-sm transition-all ${
+          isOutOfStock
+            ? 'bg-slate-100 text-slate-400 cursor-not-allowed dark:bg-slate-800'
+            : added
+            ? 'bg-pharmacy-100 text-pharmacy-800 dark:bg-pharmacy-950/40 dark:text-pharmacy-400'
+            : 'bg-medical-600 hover:bg-medical-700 text-white'
+        }`}
+      >
+        {isOutOfStock ? 'Sold Out' : adding ? 'Adding...' : added ? 'Added!' : 'Add to Cart'}
+      </button>
     </div>
   );
 }
