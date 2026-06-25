@@ -25,6 +25,25 @@ exports.queryChatbot = async (req, res) => {
     // Save user message
     conversation.messages.push({ sender: 'user', text: message });
 
+    // Database Search logic for medicines availability/information
+    const cleanMsg = message.toLowerCase().replace(/[?,.!]/g, '');
+    const words = cleanMsg.split(/\s+/).filter(w => 
+      w.length > 2 && 
+      !['available', 'not', 'have', 'you', 'for', 'any', 'does', 'shop', 'store', 'buy', 'get', 'with', 'medicine', 'medicines', 'tablet', 'tablets', 'syrup', 'syrups', 'please', 'needed', 'status', 'deliver', 'delivered', 'order'].includes(w)
+    );
+
+    let foundMedicines = [];
+    if (words.length > 0) {
+      const regexQueries = words.map(w => new RegExp(w, 'i'));
+      foundMedicines = await Medicine.find({
+        $or: [
+          { name: { $in: regexQueries } },
+          { genericName: { $in: regexQueries } },
+          { brand: { $in: regexQueries } }
+        ]
+      }).populate('category', 'name');
+    }
+
     let botResponse = '';
 
     // If Gemini key is set, call the actual API
@@ -33,15 +52,25 @@ exports.queryChatbot = async (req, res) => {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
+        const dbMedicinesInfo = foundMedicines.map(med => {
+          const stockText = med.stock > 0 ? `In Stock (${med.stock} units)` : "Out of Stock";
+          const rxText = med.requiresPrescription ? "⚠️ Requires Prescription" : "Over-The-Counter (OTC)";
+          return `Name: ${med.name}, SKU: ${med.sku}, Generic Name: ${med.genericName || 'N/A'}, Brand: ${med.brand}, Price: ₹${med.price}, Stock: ${stockText}, Type: ${rxText}, Category: ${med.category ? med.category.name : 'N/A'}, Link: /product/${med._id}`;
+        }).join('\n');
+
         const promptContext = `
           You are an AI-powered medical store assistant for "KSJ Global Medical" (Tagline: "Your Trusted Online Medical Store").
           You answer medicine-related queries, guide users through the website features (like shop, categories, cart, user dashboards), and recommend healthcare products.
           
+          Here are matching medicines currently in our database:
+          ${dbMedicinesInfo || 'No direct database matches found.'}
+
           Guidelines:
-          1. Answer medicine-related queries accurately based on standard healthcare facts.
-          2. Emphasize that you are an AI assistant and advise consulting a pharmacist or doctor.
-          3. Keep responses clean, concise, and formatted in markdown.
-          4. Do NOT output a disclaimer in your response text itself because the backend will prepend a standard one.
+          1. If the user is asking about the availability of a specific medicine and it's listed above in the database matches, confirm its availability using the exact price, brand, stock, and prescription details. Output a markdown link to the product using the relative path \`/product/<id>\` (e.g. [View Product](/product/<id>)).
+          2. If the user asks about a medicine that is NOT in the database, explain that we don't have it in stock right now, but suggest checking back later or browsing categories.
+          3. Emphasize that you are an AI assistant and advise consulting a pharmacist or doctor.
+          4. Keep responses clean, concise, and formatted in markdown.
+          5. Do NOT output a disclaimer in your response text itself because the backend will prepend a standard one.
           
           User Message: "${message}"
         `;
@@ -51,11 +80,11 @@ exports.queryChatbot = async (req, res) => {
         botResponse = responseText.trim();
       } catch (geminiError) {
         console.error('Gemini API Error:', geminiError.message);
-        botResponse = getFallbackResponse(message);
+        botResponse = getFallbackResponse(message, foundMedicines);
       }
     } else {
       // Fallback response system
-      botResponse = getFallbackResponse(message);
+      botResponse = getFallbackResponse(message, foundMedicines);
     }
 
     // Final response (Always prepended with the medical disclaimer if clinical query, or as a general header)
@@ -78,8 +107,30 @@ exports.queryChatbot = async (req, res) => {
 };
 
 // Fallback search suggestions helper
-function getFallbackResponse(query) {
+function getFallbackResponse(query, foundMedicines) {
   const lowercaseQuery = query.toLowerCase();
+
+  // 1. If we found matching medicines in database, return a detailed markdown answer!
+  if (foundMedicines && foundMedicines.length > 0) {
+    let reply = "Yes! We have the following matching medicine(s) in our store:\n\n";
+    foundMedicines.forEach(med => {
+      const stockText = med.stock > 0 ? `In Stock (${med.stock} units)` : "Out of Stock";
+      const rxText = med.requiresPrescription ? "⚠️ Requires Prescription to purchase" : "Over-The-Counter (OTC)";
+      reply += `💊 **${med.name}** (${med.brand})\n`;
+      reply += `- **Generic Ingredient**: ${med.genericName || 'N/A'}\n`;
+      reply += `- **Price**: ₹${med.price}\n`;
+      reply += `- **Availability**: ${stockText}\n`;
+      reply += `- **Prescription Status**: ${rxText}\n`;
+      reply += `- **Product Link**: [View Product Details](/product/${med._id})\n\n`;
+    });
+    reply += "Please click the link(s) above to view details, upload your prescription, or add items to your cart.";
+    return reply;
+  }
+
+  // 2. Generic fallbacks if no database matches found
+  if (lowercaseQuery.includes('dolo') || lowercaseQuery.includes('paracetamol')) {
+    return "We have Paracetamol options like Dolo 650mg in stock. Please browse here: [Browse Tablets](/shop?category=Tablets) or search the catalog directly.";
+  }
 
   if (lowercaseQuery.includes('fever') || lowercaseQuery.includes('pain') || lowercaseQuery.includes('headache')) {
     return "For mild fever or general body pain, common over-the-counter tablets include Paracetamol (Crocin/Dolo 650) or Ibuprofen (Combiflam). \n\nYou can browse these medicines in our tablets section: [Browse Tablets](/shop?category=Tablets).";
@@ -105,5 +156,6 @@ function getFallbackResponse(query) {
     return "Hello! Welcome to KSJ Global Medical. I am your AI assistant. How can I help you today? You can ask about medicines, vitamins, category recommendations, or checking your order status!";
   }
 
-  return "I understand your query. For specific medicines or devices, you can browse all categories in our store: [Go to Shop](/shop) or search by name. For medical conditions, please consult a practitioner.";
+  return "I'm sorry, I couldn't find a matching product in our database right now. You can check all available medicines in the shop here: [Go to Shop](/shop) or search again with a different spelling.";
 }
+
