@@ -163,3 +163,20 @@ function getFallbackResponse(query, foundMedicines) {
   return "I'm sorry, I couldn't find a matching product in our database right now. You can check all available medicines in the shop here: [Go to Shop](/shop) or search again with a different spelling.";
 }
 
+// Get all chatbot conversations (for admin/employees)
+exports.getAllConversations = async (req, res) => {
+  try {
+    const conversations = await ChatbotConversation.find({})
+      .populate('user', 'name email phone')
+      .sort({ updatedAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: conversations.length,
+      data: conversations
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+

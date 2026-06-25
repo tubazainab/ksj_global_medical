@@ -22,7 +22,9 @@ import {
   Eye,
   Check,
   Truck,
-  HeartPulse
+  HeartPulse,
+  MessageSquare,
+  User
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -61,6 +63,12 @@ export default function AdminDashboard() {
   // Order update states
   const [orderCarrier, setOrderCarrier] = useState('');
   const [orderTrackingNumber, setOrderTrackingNumber] = useState('');
+
+  // Chat Log states
+  const [conversations, setConversations] = useState([]);
+  const [loadingChats, setLoadingChats] = useState(false);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [chatSearchQuery, setChatSearchQuery] = useState('');
 
   // Form states - Add Medicine
   const [medName, setMedName] = useState('');
@@ -140,10 +148,20 @@ export default function AdminDashboard() {
       if (ordersData.success) setOrders(ordersData.data);
       setLoadingOrders(false);
 
+      // 7. Fetch all chatbot conversations for logs
+      setLoadingChats(true);
+      const chatsRes = await fetch(`${API_URL}/chatbot/conversations`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const chatsData = await chatsRes.json();
+      if (chatsData.success) setConversations(chatsData.data);
+      setLoadingChats(false);
+
     } catch (err) {
       console.error('Error loading admin details:', err);
       setLoadingMeds(false);
       setLoadingOrders(false);
+      setLoadingChats(false);
     }
   };
 
@@ -374,6 +392,14 @@ export default function AdminDashboard() {
           }`}
         >
           <ShoppingBag size={14} className="inline mr-1" /> Manage Orders
+        </button>
+        <button
+          onClick={() => setActiveTab('chats')}
+          className={`px-4 py-2 rounded-xl transition-all ${
+            activeTab === 'chats' ? 'bg-white dark:bg-slate-700 shadow text-medical-800 dark:text-white' : 'text-slate-500'
+          }`}
+        >
+          <MessageSquare size={14} className="inline mr-1" /> Chat Logs
         </button>
         <button
           onClick={() => setActiveTab('employee')}
@@ -866,6 +892,152 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* 5. CUSTOMER CHAT LOGS */}
+      {activeTab === 'chats' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Chat Sessions Directory (Left Col) */}
+          <div className="lg:col-span-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col h-[600px]">
+            <div className="border-b pb-3.5 mb-4">
+              <h3 className="text-base font-bold flex items-center">
+                <MessageSquare size={18} className="mr-1.5 text-medical-600" /> Chat Logs Directory
+              </h3>
+              <p className="text-[10px] text-slate-400 mt-1">Select a patient session to inspect dialogue log histories.</p>
+            </div>
+
+            {/* Local Search input */}
+            <div className="relative mb-4 shrink-0">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={chatSearchQuery}
+                onChange={(e) => setChatSearchQuery(e.target.value)}
+                placeholder="Search by User or Session..."
+                className="pl-8 pr-3 py-1.5 w-full text-xxs border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500 font-semibold"
+              />
+            </div>
+
+            {loadingChats ? (
+              <p className="text-xs text-slate-500 text-center py-10">Loading chatbot logs...</p>
+            ) : conversations.length === 0 ? (
+              <p className="text-xs text-slate-500 text-center py-10">No chat sessions recorded yet.</p>
+            ) : (
+              <div className="flex-1 overflow-y-auto pr-1 no-scrollbar space-y-2.5">
+                {conversations
+                  .filter(c => {
+                    const q = chatSearchQuery.toLowerCase();
+                    const matchesSession = c.sessionId.toLowerCase().includes(q);
+                    const matchesUser = c.user && (
+                      c.user.name.toLowerCase().includes(q) ||
+                      c.user.email.toLowerCase().includes(q)
+                    );
+                    return matchesSession || matchesUser;
+                  })
+                  .map((chat) => {
+                    const lastMsg = chat.messages[chat.messages.length - 1];
+                    const isSelected = selectedChat && selectedChat._id === chat._id;
+                    const formattedTime = new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                    return (
+                      <button
+                        key={chat._id}
+                        onClick={() => setSelectedChat(chat)}
+                        className={`w-full text-left p-3.5 rounded-xl border transition-all text-xs flex flex-col space-y-1 hover:border-slate-350 ${
+                          isSelected
+                            ? 'bg-medical-50 border-medical-250 dark:bg-slate-800 dark:border-slate-700'
+                            : 'border-slate-150 bg-white dark:bg-slate-900/50'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start w-full">
+                          <span className="font-extrabold text-slate-800 dark:text-white truncate max-w-[70%]">
+                            {chat.user ? chat.user.name : 'Guest User'}
+                          </span>
+                          <span className="text-[9px] text-slate-400 shrink-0">{formattedTime}</span>
+                        </div>
+                        {chat.user && (
+                          <span className="text-[10px] text-slate-450 dark:text-slate-400 truncate">{chat.user.email}</span>
+                        )}
+                        {!chat.user && (
+                          <span className="text-[9px] text-slate-400 font-mono select-all uppercase">SESS: {chat.sessionId.substring(5)}</span>
+                        )}
+                        <p className="text-[10px] text-slate-500 line-clamp-1 italic pt-1 border-t border-slate-50 dark:border-slate-800/40">
+                          {lastMsg ? lastMsg.text.replace(/⚠️.*?\*/g, '').substring(0, 50) : 'No messages'}
+                        </p>
+                      </button>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+
+          {/* Dialogue Log Inspector (Right Col) */}
+          <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col h-[600px]">
+            {selectedChat ? (
+              <div className="flex flex-col h-full overflow-hidden text-xs">
+                
+                {/* Header */}
+                <div className="border-b pb-3 mb-4 flex justify-between items-center shrink-0">
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 dark:text-white uppercase">
+                      Session Inspector: {selectedChat.sessionId.substring(5)}
+                    </h3>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      User: <b>{selectedChat.user ? selectedChat.user.name : 'Guest Patient'}</b>
+                      {selectedChat.user && ` | Email: ${selectedChat.user.email}`}
+                    </p>
+                  </div>
+                  <span className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-500 rounded px-2 py-0.5 font-bold uppercase tracking-wider">
+                    {selectedChat.messages.length} messages
+                  </span>
+                </div>
+
+                {/* Dialog Messages list */}
+                <div className="flex-1 overflow-y-auto pr-1 no-scrollbar space-y-4 p-2 bg-slate-50 dark:bg-slate-955/20 rounded-2xl border mb-2">
+                  {selectedChat.messages.map((msg, idx) => {
+                    const isUser = msg.sender === 'user';
+                    return (
+                      <div key={idx} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`flex items-start space-x-2 max-w-[80%] ${isUser ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                          
+                          {/* Avatar icon */}
+                          <div className={`p-1 rounded-full text-xxs flex items-center justify-center shrink-0 mt-0.5 ${
+                            isUser ? 'bg-medical-100 text-medical-800' : 'bg-pharmacy-100 text-pharmacy-800'
+                          }`}>
+                            {isUser ? <User size={10} /> : <HeartPulse size={10} />}
+                          </div>
+
+                          {/* Message text bubble */}
+                          <div className="text-left">
+                            <div className={`p-3 rounded-2xl leading-relaxed whitespace-pre-wrap ${
+                              isUser
+                                ? 'bg-medical-600 text-white rounded-tr-none'
+                                : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200/50 dark:border-slate-700/50'
+                            }`}>
+                              {msg.text}
+                            </div>
+                            <span className="block text-[8px] text-slate-400 text-right mt-0.5 font-medium">
+                              {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-400 space-y-3">
+                <MessageSquare size={36} className="text-slate-300 animate-pulse" />
+                <p className="text-xs font-semibold">Select a chat dialogue session from the directory list to inspect the logs.</p>
+              </div>
+            )}
           </div>
 
         </div>
