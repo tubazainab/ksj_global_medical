@@ -14,7 +14,8 @@ import {
   Download,
   Calendar,
   ShieldCheck,
-  UserCog
+  UserCog,
+  FileText
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -40,6 +41,71 @@ export default function UserDashboard() {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [zip, setZip] = useState('');
+
+  // Prescription upload state variables
+  const [prescFile, setPrescFile] = useState('');
+  const [prescFileName, setPrescFileName] = useState('');
+  const [prescNote, setPrescNote] = useState('');
+  const [prescList, setPrescList] = useState([]);
+  const [prescSuccess, setPrescSuccess] = useState('');
+  const [prescError, setPrescError] = useState('');
+
+  // Load prescriptions on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('ksj-user-prescriptions');
+      if (stored) {
+        setPrescList(JSON.parse(stored));
+      }
+    }
+  }, []);
+
+  const handlePrescFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPrescFileName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPrescFile(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePrescSubmit = (e) => {
+    e.preventDefault();
+    setPrescSuccess('');
+    setPrescError('');
+
+    if (!prescFile) {
+      setPrescError('Please pick a prescription image or PDF file.');
+      return;
+    }
+
+    const newPresc = {
+      id: 'RX-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+      fileName: prescFileName,
+      fileData: prescFile,
+      note: prescNote,
+      uploadedAt: new Date().toISOString(),
+      status: 'Under Review'
+    };
+
+    const updated = [newPresc, ...prescList];
+    setPrescList(updated);
+    localStorage.setItem('ksj-user-prescriptions', JSON.stringify(updated));
+
+    setPrescSuccess('Prescription submitted successfully! Our pharmacist will review it and call you shortly.');
+    setPrescFile('');
+    setPrescFileName('');
+    setPrescNote('');
+  };
+
+  const handleDeletePresc = (id) => {
+    const updated = prescList.filter(item => item.id !== id);
+    setPrescList(updated);
+    localStorage.setItem('ksj-user-prescriptions', JSON.stringify(updated));
+  };
 
   // Check authentication
   useEffect(() => {
@@ -188,6 +254,14 @@ export default function UserDashboard() {
                 }`}
               >
                 <MapPin size={16} /> <span>Addresses</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('prescription')}
+                className={`w-full flex items-center space-x-2.5 px-3 py-2 text-xs rounded-xl font-bold transition-colors ${
+                  activeTab === 'prescription' ? 'bg-medical-600 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                }`}
+              >
+                <FileText size={16} /> <span>My Prescriptions</span>
               </button>
               <button
                 onClick={() => setActiveTab('profile')}
@@ -458,6 +532,112 @@ export default function UserDashboard() {
                   Save Address
                 </button>
               </form>
+            </div>
+          )}
+
+          {/* PRESCRIPTION UPLOAD TAB */}
+          {activeTab === 'prescription' && (
+            <div className="space-y-6 text-left">
+              <h2 className="text-xl font-black">Prescription Upload Center</h2>
+              <p className="text-xs text-slate-500">
+                Upload your doctor's prescription. Our certified pharmacists will review the details and call you to confirm your required medicines.
+              </p>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                {/* Upload Form */}
+                <form onSubmit={handlePrescSubmit} className="lg:col-span-1 bg-slate-50 dark:bg-slate-800/40 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 text-xs space-y-4 h-fit">
+                  <h3 className="font-bold text-sm flex items-center">
+                    <FileText size={16} className="mr-1.5 text-medical-600" /> Send New Prescription
+                  </h3>
+
+                  {prescError && <p className="text-xs text-red-500 font-bold bg-red-50 p-2 rounded">{prescError}</p>}
+                  {prescSuccess && <p className="text-xs text-pharmacy-600 font-bold bg-pharmacy-50 p-2 rounded">{prescSuccess}</p>}
+
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold">Prescription File (Image/PDF)</label>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      required
+                      onChange={handlePrescFileChange}
+                      className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-medical-50 file:text-medical-700 dark:file:bg-medical-950/40 dark:file:text-medical-300 hover:file:bg-medical-100 dark:hover:file:bg-medical-900 cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-slate-400 font-bold">Additional Notes / Required Medicines</label>
+                    <textarea
+                      rows="3"
+                      value={prescNote}
+                      onChange={(e) => setPrescNote(e.target.value)}
+                      className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
+                      placeholder="E.g. List the name of specific medicines in your prescription..."
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-2.5 bg-medical-600 hover:bg-medical-700 text-white rounded-lg font-bold shadow-md transition-colors"
+                  >
+                    Submit to Pharmacist
+                  </button>
+                </form>
+
+                {/* History list */}
+                <div className="lg:col-span-2 space-y-4">
+                  <h3 className="font-bold text-sm">Upload History</h3>
+
+                  {prescList.length === 0 ? (
+                    <div className="bg-slate-100 dark:bg-slate-900/50 p-8 rounded-3xl text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800">
+                      No prescription upload records found.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {prescList.map((item) => (
+                        <div
+                          key={item.id}
+                          className="border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col justify-between shadow-sm bg-white dark:bg-slate-900/20"
+                        >
+                          <div className="flex items-start space-x-3 text-xs">
+                            <div className="w-10 h-10 border rounded-xl overflow-hidden flex items-center justify-center shrink-0 bg-slate-50 dark:bg-slate-800">
+                              {item.fileData && item.fileData.startsWith('data:image/') ? (
+                                <img src={item.fileData} alt="Thumb" className="w-full h-full object-contain p-0.5" />
+                              ) : (
+                                <FileText className="text-slate-400" size={20} />
+                              )}
+                            </div>
+                            <div className="space-y-1">
+                              <h4 className="font-bold text-slate-800 dark:text-white line-clamp-1" title={item.fileName}>
+                                {item.fileName}
+                              </h4>
+                              <span className="text-[10px] text-slate-400 block">
+                                Uploaded: {new Date(item.uploadedAt).toLocaleDateString()}
+                              </span>
+                              {item.note && (
+                                <p className="text-[10px] text-slate-500 italic line-clamp-2">"{item.note}"</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex justify-between items-center mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/40 text-[10px]">
+                            <span className="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-extrabold uppercase tracking-wider">
+                              {item.status}
+                            </span>
+                            <button
+                              onClick={() => handleDeletePresc(item.id)}
+                              className="text-red-500 font-semibold hover:underline"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+              </div>
             </div>
           )}
 
