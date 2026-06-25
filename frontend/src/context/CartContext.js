@@ -36,9 +36,36 @@ export const CartProvider = ({ children }) => {
       } else {
         // Guest mode fallback local storage
         const localCart = localStorage.getItem('ksj-guest-cart');
-        if (localCart) setCart(JSON.parse(localCart));
+        if (localCart) {
+          try {
+            const parsed = JSON.parse(localCart);
+            if (parsed && Array.isArray(parsed.items)) {
+              setCart(parsed);
+            } else if (Array.isArray(parsed)) {
+              setCart({ items: parsed });
+            } else {
+              setCart({ items: [] });
+            }
+          } catch (e) {
+            setCart({ items: [] });
+          }
+        }
+
         const localWish = localStorage.getItem('ksj-guest-wish');
-        if (localWish) setWishlist(JSON.parse(localWish));
+        if (localWish) {
+          try {
+            const parsed = JSON.parse(localWish);
+            if (parsed && Array.isArray(parsed.medicines)) {
+              setWishlist(parsed);
+            } else if (Array.isArray(parsed)) {
+              setWishlist({ medicines: parsed });
+            } else {
+              setWishlist({ medicines: [] });
+            }
+          } catch (e) {
+            setWishlist({ medicines: [] });
+          }
+        }
       }
     };
 
@@ -68,8 +95,8 @@ export const CartProvider = ({ children }) => {
       }
     } else {
       // Guest local storage update
-      const items = [...cart.items];
-      const existIndex = items.findIndex(item => item.medicine._id === medicine._id);
+      const items = cart && Array.isArray(cart.items) ? [...cart.items] : [];
+      const existIndex = items.findIndex(item => item && item.medicine && item.medicine._id === medicine._id);
       if (existIndex > -1) {
         items[existIndex].quantity = quantity;
       } else {
@@ -101,7 +128,8 @@ export const CartProvider = ({ children }) => {
       }
     } else {
       // Guest local storage remove
-      const items = cart.items.filter(item => item.medicine._id !== medicineId);
+      const itemsList = cart && Array.isArray(cart.items) ? cart.items : [];
+      const items = itemsList.filter(item => item && item.medicine && item.medicine._id !== medicineId);
       const newCart = { items };
       setCart(newCart);
       localStorage.setItem('ksj-guest-cart', JSON.stringify(newCart));
@@ -136,8 +164,8 @@ export const CartProvider = ({ children }) => {
       }
     } else {
       // Guest local storage wishlist
-      let medicines = [...wishlist.medicines];
-      const existIndex = medicines.findIndex(m => m._id === medicine._id);
+      let medicines = wishlist && Array.isArray(wishlist.medicines) ? [...wishlist.medicines] : [];
+      const existIndex = medicines.findIndex(m => m && m._id === medicine._id);
       let action = 'added';
       if (existIndex > -1) {
         medicines.splice(existIndex, 1);
@@ -163,7 +191,9 @@ export const CartProvider = ({ children }) => {
   };
 
   // Totals calculations
-  const subtotal = cart.items.reduce((sum, item) => {
+  const itemsForSubtotal = cart && Array.isArray(cart.items) ? cart.items : [];
+  const subtotal = itemsForSubtotal.reduce((sum, item) => {
+    if (!item || !item.medicine) return sum;
     const price = item.medicine.discountPrice > 0 ? item.medicine.discountPrice : item.medicine.price;
     return sum + price * item.quantity;
   }, 0);

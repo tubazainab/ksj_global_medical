@@ -74,6 +74,7 @@ export default function CartPage() {
         <div className="lg:col-span-2 space-y-4 text-left">
           {cart.items.map((item) => {
             const med = item.medicine;
+            if (!med) return null;
             const price = med.discountPrice > 0 ? med.discountPrice : med.price;
 
             return (

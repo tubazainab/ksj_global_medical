@@ -388,13 +388,16 @@ export default function CheckoutPage() {
             <h3 className="text-lg font-bold border-b border-slate-100 dark:border-slate-800 pb-3">Review Purchase</h3>
             
             <div className="space-y-2 max-h-36 overflow-y-auto pr-1 text-xs">
-              {cart.items.map((item) => (
-                <div key={item.medicine._id} className="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/50">
-                  <span className="line-clamp-1 w-32">{item.medicine.name}</span>
-                  <span className="text-slate-400">x{item.quantity}</span>
-                  <span className="font-semibold">₹{(item.medicine.discountPrice > 0 ? item.medicine.discountPrice : item.medicine.price) * item.quantity}</span>
-                </div>
-              ))}
+              {cart.items.map((item) => {
+                if (!item || !item.medicine) return null;
+                return (
+                  <div key={item.medicine._id} className="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/50">
+                    <span className="line-clamp-1 w-32">{item.medicine.name}</span>
+                    <span className="text-slate-400">x{item.quantity}</span>
+                    <span className="font-semibold">₹{(item.medicine.discountPrice > 0 ? item.medicine.discountPrice : item.medicine.price) * item.quantity}</span>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="space-y-2.5 text-xs text-slate-600 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-3">
