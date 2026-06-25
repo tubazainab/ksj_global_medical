@@ -143,6 +143,9 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     setEmployee(null);
+    if (typeof window !== 'undefined') {
+      window.location.href = '/auth/login';
+    }
   };
 
   // Refresh user profile details
