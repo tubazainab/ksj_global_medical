@@ -162,9 +162,9 @@ export default function Navbar() {
                   className="flex items-center space-x-2 text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none"
                 >
                   <div className="w-8 h-8 rounded-full bg-medical-100 dark:bg-medical-900 text-medical-800 dark:text-medical-300 flex items-center justify-center font-bold">
-                    {activeUser.name.charAt(0).toUpperCase()}
+                    {activeUser.name ? activeUser.name.charAt(0).toUpperCase() : ''}
                   </div>
-                  <span className="hidden xl:inline">{activeUser.name.split(' ')[0]}</span>
+                  <span className="hidden xl:inline">{activeUser.name ? activeUser.name.split(' ')[0] : ''}</span>
                   <ChevronDown size={14} />
                 </button>
 
@@ -258,7 +258,7 @@ export default function Navbar() {
             {activeUser ? (
               <div className="space-y-1">
                 <div className="px-3 py-1.5 text-sm font-semibold text-slate-500">
-                  Hi, {activeUser.name}
+                  Hi, {activeUser.name || ''}
                 </div>
                 <Link
                   href={isEmployee ? `/employee` : `/dashboard`}
