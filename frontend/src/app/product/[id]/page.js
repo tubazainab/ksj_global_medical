@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCart } from '../../../context/CartContext';
+import AddToCartButton from '../../../components/AddToCartButton';
 import { useAuth } from '../../../context/AuthContext';
 import {
   HeartPulse,
@@ -200,7 +201,7 @@ export default function ProductDetails() {
           <div className="flex items-center space-x-4 pt-2">
             
             {/* Quantity Selector */}
-            <div className="flex items-center border border-slate-300 dark:border-slate-700 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800">
+            <div className="flex items-center border border-slate-300 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800">
               <button
                 onClick={() => setQty(Math.max(1, qty - 1))}
                 className="p-2.5 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600"
@@ -216,12 +217,13 @@ export default function ProductDetails() {
               </button>
             </div>
 
-            <button
-              onClick={() => addToCart(medicine, qty)}
-              className="flex-grow inline-flex items-center justify-center bg-medical-600 hover:bg-medical-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors"
+            <AddToCartButton
+              medicine={medicine}
+              quantity={qty}
+              className="flex-grow inline-flex items-center justify-center font-semibold py-3 px-6 rounded-lg shadow-md transition-all text-sm"
             >
-              Add {qty} to Cart
-            </button>
+              <span>Add {qty} to Cart</span>
+            </AddToCartButton>
 
             <button
               onClick={() => toggleWishlist(medicine)}
@@ -319,7 +321,7 @@ export default function ProductDetails() {
                   rows="3"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  className="w-full text-xs p-3 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg focus:outline-none"
+                  className="w-full text-xs p-3 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500 rounded-lg"
                   placeholder="Share details of your experience with this medicine..."
                 />
               </div>

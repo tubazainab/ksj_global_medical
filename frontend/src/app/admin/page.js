@@ -316,7 +316,7 @@ export default function AdminDashboard() {
                 required
                 value={medName}
                 onChange={(e) => setMedName(e.target.value)}
-                className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                 placeholder="E.g. Paracetamol 650mg"
               />
             </div>
@@ -328,7 +328,7 @@ export default function AdminDashboard() {
                 required
                 value={medSku}
                 onChange={(e) => setMedSku(e.target.value)}
-                className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                 placeholder="E.g. MED-PARA-650"
               />
             </div>
@@ -340,7 +340,7 @@ export default function AdminDashboard() {
                 required
                 value={medGeneric}
                 onChange={(e) => setMedGeneric(e.target.value)}
-                className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                 placeholder="E.g. Acetaminophen"
               />
             </div>
@@ -352,7 +352,7 @@ export default function AdminDashboard() {
                 required
                 value={medBrand}
                 onChange={(e) => setMedBrand(e.target.value)}
-                className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                 placeholder="E.g. Micro Labs"
               />
             </div>
@@ -362,7 +362,7 @@ export default function AdminDashboard() {
               <select
                 value={medCategory}
                 onChange={(e) => setMedCategory(e.target.value)}
-                className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800 font-semibold"
+                className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500 font-semibold"
               >
                 {categories.map(cat => (
                   <option key={cat._id} value={cat._id}>{cat.name}</option>
@@ -377,7 +377,7 @@ export default function AdminDashboard() {
                 required
                 value={medPrice}
                 onChange={(e) => setMedPrice(Number(e.target.value))}
-                className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
               />
             </div>
 
@@ -388,7 +388,7 @@ export default function AdminDashboard() {
                 required
                 value={medStock}
                 onChange={(e) => setMedStock(Number(e.target.value))}
-                className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
               />
             </div>
 
@@ -399,7 +399,7 @@ export default function AdminDashboard() {
                 required
                 value={medExpiry}
                 onChange={(e) => setMedExpiry(e.target.value)}
-                className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
               />
             </div>
 
@@ -421,7 +421,7 @@ export default function AdminDashboard() {
                 rows="3"
                 value={medDesc}
                 onChange={(e) => setMedDesc(e.target.value)}
-                className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                 placeholder="Product summary and clinical warnings..."
               />
             </div>
@@ -457,7 +457,7 @@ export default function AdminDashboard() {
                   required
                   value={empName}
                   onChange={(e) => setEmpName(e.target.value)}
-                  className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                  className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                   placeholder="E.g. Dr. Sarah Connor"
                 />
               </div>
@@ -469,7 +469,7 @@ export default function AdminDashboard() {
                   required
                   value={empEmail}
                   onChange={(e) => setEmpEmail(e.target.value)}
-                  className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                  className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                   placeholder="sarah@ksjmedical.com"
                 />
               </div>
@@ -481,7 +481,7 @@ export default function AdminDashboard() {
                   required
                   value={empPassword}
                   onChange={(e) => setEmpPassword(e.target.value)}
-                  className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                  className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                   placeholder="••••••••"
                 />
               </div>
@@ -491,7 +491,7 @@ export default function AdminDashboard() {
                 <select
                   value={empRole}
                   onChange={(e) => setEmpRole(e.target.value)}
-                  className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800 font-semibold"
+                  className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500 font-semibold"
                 >
                   <option value="Manager">Manager</option>
                   <option value="Pharmacist">Pharmacist</option>

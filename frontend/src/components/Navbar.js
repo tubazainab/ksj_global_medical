@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
@@ -39,6 +39,22 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [catMenuOpen, setCatMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+
+  const catMenuRef = useRef(null);
+  const profileMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (catMenuRef.current && !catMenuRef.current.contains(event.target)) {
+        setCatMenuOpen(false);
+      }
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -80,7 +96,7 @@ export default function Navbar() {
               placeholder="Search medicines, active ingredients, or brands..."
               value={searchVal}
               onChange={(e) => setSearchVal(e.target.value)}
-              className="w-full pl-4 pr-10 py-2 border border-slate-300 dark:border-slate-700 rounded-full bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-medical-500"
+              className="w-full pl-4 pr-10 py-2 border border-slate-300 dark:border-slate-700 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-medical-500"
             />
             <button type="submit" className="absolute right-3 text-slate-400 hover:text-medical-600">
               <Search size={18} />
@@ -91,21 +107,21 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center space-x-6">
             
             {/* Category Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={catMenuRef}>
               <button
                 onClick={() => setCatMenuOpen(!catMenuOpen)}
-                onBlur={() => setTimeout(() => setCatMenuOpen(false), 200)}
-                className="flex items-center text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-medical-600"
+                className="flex items-center text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-medical-600 focus:outline-none"
               >
                 Categories <ChevronDown size={14} className="ml-1" />
               </button>
               {catMenuOpen && (
-                <div className="absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-slate-800 ring-1 ring-black ring-opacity-5">
+                <div className="absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-slate-800 ring-1 ring-black ring-opacity-5 z-50">
                   <div className="py-1">
                     {CATEGORIES.map((cat) => (
                       <Link
                         key={cat}
                         href={`/shop?category=${encodeURIComponent(cat)}`}
+                        onClick={() => setCatMenuOpen(false)}
                         className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
                       >
                         {cat}
@@ -155,10 +171,9 @@ export default function Navbar() {
 
             {/* User Session Menu */}
             {activeUser ? (
-              <div className="relative">
+              <div className="relative" ref={profileMenuRef}>
                 <button
                   onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                  onBlur={() => setTimeout(() => setProfileMenuOpen(false), 200)}
                   className="flex items-center space-x-2 text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none"
                 >
                   <div className="w-8 h-8 rounded-full bg-medical-100 dark:bg-medical-900 text-medical-800 dark:text-medical-300 flex items-center justify-center font-bold">
@@ -169,9 +184,10 @@ export default function Navbar() {
                 </button>
 
                 {profileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-slate-800 ring-1 ring-black ring-opacity-5 py-1">
+                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-slate-800 ring-1 ring-black ring-opacity-5 py-1 z-50">
                     <Link
                       href={isEmployee ? `/employee` : `/dashboard`}
+                      onClick={() => setProfileMenuOpen(false)}
                       className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
                     >
                       {isEmployee ? 'Employee Panel' : 'My Dashboard'}
@@ -179,13 +195,14 @@ export default function Navbar() {
                     {isEmployee && employee.role === 'Admin' && (
                       <Link
                         href="/admin"
+                        onClick={() => setProfileMenuOpen(false)}
                         className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
                       >
                         Admin Panel
                       </Link>
                     )}
                     <button
-                      onMouseDown={logout}
+                      onClick={() => { setProfileMenuOpen(false); logout(); }}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-slate-100 dark:hover:bg-slate-700"
                     >
                       Sign Out
@@ -226,7 +243,7 @@ export default function Navbar() {
               placeholder="Search medicines..."
               value={searchVal}
               onChange={(e) => setSearchVal(e.target.value)}
-              className="w-full pl-4 pr-10 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-slate-50 dark:bg-slate-800"
+              className="w-full pl-4 pr-10 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-medical-500"
             />
             <button type="submit" className="absolute right-3 top-2.5 text-slate-400">
               <Search size={18} />

@@ -212,7 +212,7 @@ export default function EmployeeDashboard() {
                         <select
                           value={ord.orderStatus}
                           onChange={(e) => handleUpdateOrderStatus(ord._id, e.target.value)}
-                          className="bg-slate-50 dark:bg-slate-800 border p-1.5 rounded-lg text-xxs font-bold focus:outline-none"
+                          className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 p-1.5 rounded-lg text-xxs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-medical-500"
                         >
                           <option value="Pending">Pending</option>
                           <option value="Processing">Processing</option>

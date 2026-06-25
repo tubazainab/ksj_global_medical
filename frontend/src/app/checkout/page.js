@@ -31,11 +31,23 @@ export default function CheckoutPage() {
 
   // Address states
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
-  const [addingAddress, setAddingAddress] = useState(false);
+  const [addressType, setAddressType] = useState('saved'); // 'saved' | 'new'
   const [newStreet, setNewStreet] = useState('');
   const [newCity, setNewCity] = useState('');
   const [newState, setNewState] = useState('');
   const [newZip, setNewZip] = useState('');
+  const [saveToProfile, setSaveToProfile] = useState(true);
+
+  // Sync addressType when user profile loads
+  useEffect(() => {
+    if (user) {
+      if (!user.addresses || user.addresses.length === 0) {
+        setAddressType('new');
+      } else {
+        setAddressType('saved');
+      }
+    }
+  }, [user]);
 
   // Payment states
   const [paymentMethod, setPaymentMethod] = useState('COD'); // COD, Stripe, Razorpay
@@ -48,48 +60,54 @@ export default function CheckoutPage() {
   // Success states
   const [orderSuccess, setOrderSuccess] = useState(null);
 
-  const handleAddAddress = async (e) => {
-    e.preventDefault();
-    if (!newStreet || !newCity || !newState || !newZip) return;
-
-    try {
-      const res = await fetch(`${API_URL}/users/address`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          street: newStreet,
-          city: newCity,
-          state: newState,
-          postalCode: newZip,
-          isDefault: true
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        await refreshUser();
-        setAddingAddress(false);
-        setNewStreet('');
-        setNewCity('');
-        setNewState('');
-        setNewZip('');
-        setSelectedAddressIndex(user?.addresses ? user.addresses.length : 0);
-      }
-    } catch (err) {
-      console.error('Error adding address:', err);
-    }
-  };
-
   const handlePlaceOrder = async () => {
-    if (!user || !user.addresses || user.addresses.length === 0) {
-      alert('Please add a shipping address before checking out.');
-      return;
+    if (!user) return;
+
+    let shippingAddress = null;
+
+    if (addressType === 'saved') {
+      if (!user.addresses || user.addresses.length === 0) {
+        alert('Please add or select a shipping address before checking out.');
+        return;
+      }
+      shippingAddress = user.addresses[selectedAddressIndex];
+    } else {
+      if (!newStreet || !newCity || !newState || !newZip) {
+        alert('Please fill out all address fields.');
+        return;
+      }
+      shippingAddress = {
+        street: newStreet,
+        city: newCity,
+        state: newState,
+        postalCode: newZip,
+        country: 'India'
+      };
+
+      if (saveToProfile) {
+        try {
+          await fetch(`${API_URL}/users/address`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              street: newStreet,
+              city: newCity,
+              state: newState,
+              postalCode: newZip,
+              isDefault: !user.addresses || user.addresses.length === 0
+            })
+          });
+          await refreshUser();
+        } catch (err) {
+          console.error('Error saving new address during order placement:', err);
+        }
+      }
     }
 
     setLoading(true);
-    const shippingAddress = user.addresses[selectedAddressIndex];
 
     try {
       const orderItems = cart.items.map(item => ({
@@ -112,7 +130,7 @@ export default function CheckoutPage() {
             city: shippingAddress.city,
             state: shippingAddress.state,
             postalCode: shippingAddress.postalCode,
-            country: shippingAddress.country
+            country: shippingAddress.country || 'India'
           },
           paymentMethod,
           couponCode
@@ -239,101 +257,128 @@ export default function CheckoutPage() {
           {/* Section 1: Address selection */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-lg font-bold flex items-center">
+              <h3 className="text-lg font-extrabold flex items-center">
                 <MapPin size={18} className="mr-1.5 text-pharmacy-600" /> Delivery Address
               </h3>
-              {!addingAddress && (
-                <button
-                  onClick={() => setAddingAddress(true)}
-                  className="text-xs font-semibold text-medical-600 hover:text-medical-700 flex items-center"
-                >
-                  <Plus size={14} className="mr-0.5" /> Add Address
-                </button>
-              )}
             </div>
 
-            {addingAddress ? (
-              <form onSubmit={handleAddAddress} className="grid grid-cols-2 gap-4 text-xs">
-                <div className="col-span-2 space-y-1">
-                  <label className="text-slate-400">Street Address</label>
-                  <input
-                    type="text"
-                    required
-                    value={newStreet}
-                    onChange={(e) => setNewStreet(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg dark:bg-slate-800"
-                    placeholder="House No, Apartment, Street"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-400">City</label>
-                  <input
-                    type="text"
-                    required
-                    value={newCity}
-                    onChange={(e) => setNewCity(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg dark:bg-slate-800"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-400">State</label>
-                  <input
-                    type="text"
-                    required
-                    value={newState}
-                    onChange={(e) => setNewState(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg dark:bg-slate-800"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-400">Postal Code (ZIP)</label>
-                  <input
-                    type="text"
-                    required
-                    value={newZip}
-                    onChange={(e) => setNewZip(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg dark:bg-slate-800"
-                  />
-                </div>
-                <div className="col-span-2 flex space-x-2 pt-2">
-                  <button
-                    type="submit"
-                    className="bg-medical-600 text-white px-4 py-2 rounded-lg font-bold"
-                  >
-                    Save Address
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAddingAddress(false)}
-                    className="border px-4 py-2 rounded-lg text-slate-500"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            ) : !user.addresses || user.addresses.length === 0 ? (
-              <p className="text-xs text-amber-500 font-semibold">No addresses saved. Please add a shipping destination.</p>
-            ) : (
+            {/* Address Tabs (if user has saved addresses) */}
+            {user.addresses && user.addresses.length > 0 ? (
+              <div className="flex border-b border-slate-100 dark:border-slate-800 pb-2 mb-4 space-x-6">
+                <button
+                  type="button"
+                  onClick={() => setAddressType('saved')}
+                  className={`pb-2 text-xs font-black border-b-2 transition-all ${
+                    addressType === 'saved'
+                      ? 'border-medical-600 text-medical-600'
+                      : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                  }`}
+                >
+                  Deliver to Saved Address
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddressType('new')}
+                  className={`pb-2 text-xs font-black border-b-2 transition-all ${
+                    addressType === 'new'
+                      ? 'border-medical-600 text-medical-600'
+                      : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                  }`}
+                >
+                  Deliver to New Address
+                </button>
+              </div>
+            ) : null}
+
+            {addressType === 'saved' && user.addresses && user.addresses.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {user.addresses.map((addr, idx) => (
                   <div
                     key={addr._id}
                     onClick={() => setSelectedAddressIndex(idx)}
-                    className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all ${
                       selectedAddressIndex === idx
                         ? 'border-medical-600 bg-medical-50/20 dark:bg-medical-950/10'
-                        : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                        : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                     }`}
                   >
                     <div className="flex justify-between items-center text-xs font-bold mb-1.5">
-                      <span>Address #{idx + 1}</span>
-                      {addr.isDefault && <span className="bg-pharmacy-100 text-pharmacy-800 px-1.5 py-0.5 rounded text-xxs">Default</span>}
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name="selectedAddress"
+                          checked={selectedAddressIndex === idx}
+                          onChange={() => setSelectedAddressIndex(idx)}
+                          className="h-4 w-4 text-medical-600 focus:ring-medical-500 cursor-pointer bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700"
+                        />
+                        <span className="text-slate-800 dark:text-slate-200">Address #{idx + 1}</span>
+                      </div>
+                      {addr.isDefault && <span className="bg-pharmacy-100 text-pharmacy-800 px-1.5 py-0.5 rounded text-[10px] font-bold">Default</span>}
                     </div>
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                       {addr.street}, {addr.city}, {addr.state} - {addr.postalCode}
                     </p>
                   </div>
                 ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="col-span-2 space-y-1">
+                  <label className="text-slate-500 font-bold">Street Address</label>
+                  <input
+                    type="text"
+                    required
+                    value={newStreet}
+                    onChange={(e) => setNewStreet(e.target.value)}
+                    className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
+                    placeholder="House No, Apartment, Street Name"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500 font-bold">City</label>
+                  <input
+                    type="text"
+                    required
+                    value={newCity}
+                    onChange={(e) => setNewCity(e.target.value)}
+                    className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
+                    placeholder="E.g. Delhi"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500 font-bold">State</label>
+                  <input
+                    type="text"
+                    required
+                    value={newState}
+                    onChange={(e) => setNewState(e.target.value)}
+                    className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
+                    placeholder="E.g. Delhi"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500 font-bold">Postal Code (PIN)</label>
+                  <input
+                    type="text"
+                    required
+                    value={newZip}
+                    onChange={(e) => setNewZip(e.target.value)}
+                    className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
+                    placeholder="E.g. 110001"
+                  />
+                </div>
+                <div className="col-span-2 flex items-center space-x-2 pt-2">
+                  <input
+                    type="checkbox"
+                    id="saveToProfileCheckbox"
+                    checked={saveToProfile}
+                    onChange={(e) => setSaveToProfile(e.target.checked)}
+                    className="h-4 w-4 rounded text-medical-600 focus:ring-medical-500 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                  />
+                  <label htmlFor="saveToProfileCheckbox" className="text-slate-600 dark:text-slate-300 font-medium select-none cursor-pointer">
+                    Save this address to my profile for future orders
+                  </label>
+                </div>
               </div>
             )}
           </div>
@@ -470,7 +515,7 @@ export default function CheckoutPage() {
                   maxLength="19"
                   value={cardNumber}
                   onChange={(e) => setCardNumber(e.target.value)}
-                  className="w-full p-2.5 border rounded-lg dark:bg-slate-800"
+                  className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                   placeholder="4111 2222 3333 4444"
                 />
               </div>
@@ -486,7 +531,7 @@ export default function CheckoutPage() {
                     maxLength="5"
                     value={cardExpiry}
                     onChange={(e) => setCardExpiry(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg dark:bg-slate-800"
+                    className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                     placeholder="MM/YY"
                   />
                 </div>
@@ -500,7 +545,7 @@ export default function CheckoutPage() {
                     maxLength="3"
                     value={cardCvv}
                     onChange={(e) => setCardCvv(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg dark:bg-slate-800"
+                    className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                     placeholder="123"
                   />
                 </div>

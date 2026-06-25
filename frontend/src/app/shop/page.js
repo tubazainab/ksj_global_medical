@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '../../context/CartContext';
+import AddToCartButton from '../../components/AddToCartButton';
 import { Search, SlidersHorizontal, Heart, HeartPulse, ShieldAlert } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -113,7 +114,7 @@ function ShopContent() {
                 placeholder="Name or active ingredient..."
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                className="w-full pl-3 pr-8 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-xs bg-slate-50 dark:bg-slate-800"
+                className="w-full pl-3 pr-8 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-xs bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
               />
               <Search size={14} className="absolute right-3 top-2.5 text-slate-400" />
             </div>
@@ -163,7 +164,7 @@ function ShopContent() {
               id="prescription"
               checked={onlyPrescription}
               onChange={(e) => setOnlyPrescription(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-medical-600 focus:ring-medical-500 cursor-pointer"
+              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-medical-600 focus:ring-medical-500 cursor-pointer bg-white dark:bg-slate-800"
             />
             <label htmlFor="prescription" className="text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
               Prescription Required Only
@@ -261,12 +262,11 @@ function ShopContent() {
                             )}
                           </div>
 
-                          <button
-                            onClick={() => addToCart(med, 1)}
-                            className="bg-medical-600 hover:bg-medical-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-sm hover:scale-102 transition-transform"
-                          >
-                            Add to Cart
-                          </button>
+                          <AddToCartButton
+                            medicine={med}
+                            quantity={1}
+                            className="text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-sm hover:scale-102 transition-transform"
+                          />
                         </div>
                       </div>
 

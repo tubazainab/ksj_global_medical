@@ -421,7 +421,7 @@ export default function UserDashboard() {
                     required
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                    className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                     placeholder="Apartment, Street Name"
                   />
                 </div>
@@ -432,7 +432,7 @@ export default function UserDashboard() {
                     placeholder="City"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                    className="p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                   />
                   <input
                     type="text"
@@ -440,7 +440,7 @@ export default function UserDashboard() {
                     placeholder="State"
                     value={state}
                     onChange={(e) => setState(e.target.value)}
-                    className="p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                    className="p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                   />
                   <input
                     type="text"
@@ -448,7 +448,7 @@ export default function UserDashboard() {
                     placeholder="PIN"
                     value={zip}
                     onChange={(e) => setZip(e.target.value)}
-                    className="p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                    className="p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                   />
                 </div>
                 <button
@@ -477,7 +477,7 @@ export default function UserDashboard() {
                     required
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                    className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                   />
                 </div>
 
@@ -498,7 +498,7 @@ export default function UserDashboard() {
                     required
                     value={profilePhone}
                     onChange={(e) => setProfilePhone(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg bg-slate-50 dark:bg-slate-800"
+                    className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                   />
                 </div>
 

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '../context/CartContext';
+import AddToCartButton from '../components/AddToCartButton';
 import {
   ShieldCheck,
   Truck,
@@ -88,24 +89,24 @@ export default function Home() {
           </div>
 
           {/* Visual Presentation / Trust Panel */}
-          <div className="glass-card rounded-3xl p-8 bg-white/5 border-white/10 text-white space-y-6 max-w-md mx-auto lg:ml-auto">
+          <div className="rounded-3xl p-8 bg-white/10 border border-white/10 backdrop-blur-sm text-white space-y-6 max-w-md mx-auto lg:ml-auto">
             <div className="flex items-center space-x-4 border-b border-white/10 pb-4">
               <div className="bg-pharmacy-500 p-3 rounded-2xl">
                 <HeartPulse size={24} className="text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">KSJ Pharmacy Verification</h3>
-                <p className="text-xs text-slate-400">Lic. DL-39281-KSJ | Approved Drugs</p>
+                <h3 className="font-semibold text-lg text-white">KSJ Pharmacy Verification</h3>
+                <p className="text-xs text-slate-300">Lic. DL-39281-KSJ | Approved Drugs</p>
               </div>
             </div>
 
-            <div className="space-y-4 text-sm text-slate-300">
+            <div className="space-y-4 text-sm text-slate-100">
               <div className="flex items-start space-x-3">
-                <ShieldCheck size={18} className="text-pharmacy-400 mt-0.5 shrink-0" />
+                <ShieldCheck size={18} className="text-pharmacy-300 mt-0.5 shrink-0" />
                 <p>100% Genuine brand medicines sourced from audited pharmaceutical manufacturers.</p>
               </div>
               <div className="flex items-start space-x-3">
-                <Truck size={18} className="text-pharmacy-400 mt-0.5 shrink-0" />
+                <Truck size={18} className="text-pharmacy-300 mt-0.5 shrink-0" />
                 <p>Safe shipping and contactless deliveries under standard temperature controls.</p>
               </div>
             </div>
@@ -219,12 +220,11 @@ export default function Home() {
                         )}
                       </div>
 
-                      <button
-                        onClick={() => addToCart(med, 1)}
-                        className="bg-medical-600 hover:bg-medical-700 text-white text-xxs font-semibold px-3 py-1.5 rounded-full transition-colors shadow-sm"
-                      >
-                        Add to Cart
-                      </button>
+                      <AddToCartButton
+                        medicine={med}
+                        quantity={1}
+                        className="text-xxs font-semibold px-3 py-1.5 rounded-full transition-all shadow-sm"
+                      />
                     </div>
                   </div>
                 </div>

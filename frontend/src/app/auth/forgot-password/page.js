@@ -114,7 +114,7 @@ export default function ForgotPasswordPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 border rounded-lg dark:bg-slate-800"
+                  className="w-full pl-9 pr-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                   placeholder="name@email.com"
                 />
                 <Mail size={14} className="absolute left-3 top-3 text-slate-400" />
@@ -140,7 +140,7 @@ export default function ForgotPasswordPage() {
                   maxLength="6"
                   value={resetPin}
                   onChange={(e) => setResetPin(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 border rounded-lg dark:bg-slate-800 text-center font-bold tracking-wider"
+                  className="w-full pl-9 pr-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500 text-center font-bold tracking-wider"
                   placeholder="000000"
                 />
                 <KeyRound size={14} className="absolute left-3 top-3 text-slate-400" />
@@ -155,7 +155,7 @@ export default function ForgotPasswordPage() {
                   required
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 border rounded-lg dark:bg-slate-800"
+                  className="w-full pl-9 pr-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500"
                   placeholder="•••••••• (Min 6 characters)"
                 />
                 <Lock size={14} className="absolute left-3 top-3 text-slate-400" />

@@ -86,7 +86,7 @@ function OtpVerifyContent() {
                 maxLength="6"
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 border rounded-lg dark:bg-slate-800 text-center tracking-widest font-black text-lg"
+                className="w-full pl-9 pr-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500 text-center tracking-widest font-black text-lg"
                 placeholder="000000"
               />
               <KeyRound size={16} className="absolute left-3 top-3.5 text-slate-400" />
