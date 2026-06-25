@@ -2,7 +2,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const ChatbotConversation = require('../models/ChatbotConversation');
 const Medicine = require('../models/Medicine');
 
-const DISCLAIMER = "⚠️ *Medical Disclaimer: The suggestions provided by this AI assistant are for informational purposes only and do not replace professional medical advice, diagnosis, or treatment. Please consult a qualified healthcare practitioner before taking any medicines.* \n\n";
+const DISCLAIMER = "\n\n*Note: I am your AI assistant, not a doctor. Please consult a healthcare professional for clinical advice or treatment.*";
 
 // Query Chatbot
 exports.queryChatbot = async (req, res) => {
@@ -87,10 +87,13 @@ exports.queryChatbot = async (req, res) => {
       botResponse = getFallbackResponse(message, foundMedicines);
     }
 
-    // Final response (Always prepended with the medical disclaimer if clinical query, or as a general header)
-    const finalResponseText = botResponse.toLowerCase().includes('order')
+    // Final response formatting: show friendly disclaimer note at the bottom for clinical queries, omit for greetings or orders.
+    const isGreeting = ['hello', 'hi', 'hey', 'good morning', 'good evening', 'thank you', 'thanks'].some(g => cleanMsg.startsWith(g) || cleanMsg === g);
+    const isOrderQuery = cleanMsg.includes('order') || cleanMsg.includes('track') || cleanMsg.includes('history');
+
+    const finalResponseText = (isGreeting || isOrderQuery)
       ? botResponse
-      : DISCLAIMER + botResponse;
+      : botResponse + DISCLAIMER;
 
     // Save AI response
     conversation.messages.push({ sender: 'ai', text: finalResponseText });
