@@ -106,17 +106,25 @@ export default function Navbar() {
           {/* Links and Actions - Desktop */}
           <div className="hidden lg:flex items-center space-x-6">
             
-            {/* Category Dropdown */}
+            {/* Browse Medicines Dropdown */}
             <div className="relative" ref={catMenuRef}>
               <button
                 onClick={() => setCatMenuOpen(!catMenuOpen)}
                 className="flex items-center text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-medical-600 focus:outline-none"
               >
-                Categories <ChevronDown size={14} className="ml-1" />
+                Browse Medicines <ChevronDown size={14} className="ml-1" />
               </button>
               {catMenuOpen && (
                 <div className="absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-slate-800 ring-1 ring-black ring-opacity-5 z-50">
                   <div className="py-1">
+                    <Link
+                      href="/shop"
+                      onClick={() => setCatMenuOpen(false)}
+                      className="block px-4 py-2 text-sm font-bold text-medical-600 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    >
+                      All Medicines
+                    </Link>
+                    <div className="border-t border-slate-100 dark:border-slate-800 my-1"></div>
                     {CATEGORIES.map((cat) => (
                       <Link
                         key={cat}
@@ -131,10 +139,6 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-
-            <Link href="/shop" className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-medical-600">
-              Browse Medicines
-            </Link>
 
             {/* Dark Mode Toggle */}
             <button
