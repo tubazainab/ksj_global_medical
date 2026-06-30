@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import { ShieldCheck, Mail, Lock, UserCheck, Activity } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginContent() {
   const { login, loginEmployee } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -160,5 +160,13 @@ export default function LoginPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-20">Loading Login Form...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

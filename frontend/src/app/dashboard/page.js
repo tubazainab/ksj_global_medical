@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
@@ -20,7 +20,7 @@ import {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-export default function UserDashboard() {
+function UserDashboardContent() {
   const { token, user, refreshUser, logout } = useAuth();
   const { wishlist, toggleWishlist } = useCart();
   const router = useRouter();
@@ -696,5 +696,13 @@ export default function UserDashboard() {
 
       </div>
     </div>
+  );
+}
+
+export default function UserDashboard() {
+  return (
+    <Suspense fallback={<div className="text-center py-20">Loading Account Dashboard...</div>}>
+      <UserDashboardContent />
+    </Suspense>
   );
 }
